@@ -19,6 +19,10 @@ import {
   TextField,
   MenuItem,
   Chip,
+  Grid,
+  FormControlLabel,
+  Switch,
+  Divider,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -100,7 +104,9 @@ const AdminDashboard = () => {
         toast.success('Problem deleted successfully');
         fetchProblems();
       } catch (error) {
-        toast.error('Failed to delete problem');
+        const errorMessage = error.response?.data?.message || 'Failed to delete problem';
+        console.error('Delete error:', error);
+        toast.error(errorMessage);
       }
     }
   };
@@ -115,6 +121,45 @@ const AdminDashboard = () => {
         return 'error';
       default:
         return 'default';
+    }
+  };
+
+  const handleTestCaseChange = (index, field, value) => {
+    const newTestCases = [...formData.testCases];
+    newTestCases[index] = {
+      ...newTestCases[index],
+      [field]: value,
+    };
+    setFormData({
+      ...formData,
+      testCases: newTestCases,
+    });
+  };
+
+  const addTestCase = () => {
+    setFormData({
+      ...formData,
+      testCases: [
+        ...formData.testCases,
+        {
+          input: '',
+          output: '',
+          explanation: '',
+          isHidden: false,
+        },
+      ],
+    });
+  };
+
+  const removeTestCase = (index) => {
+    if (formData.testCases.length > 1) {
+      const newTestCases = formData.testCases.filter((_, i) => i !== index);
+      setFormData({
+        ...formData,
+        testCases: newTestCases,
+      });
+    } else {
+      toast.error('At least one test case is required');
     }
   };
 
@@ -147,7 +192,21 @@ const AdminDashboard = () => {
             <TableBody>
               {problems.map((problem) => (
                 <TableRow key={problem._id}>
-                  <TableCell>{problem.title}</TableCell>
+                  <TableCell>
+                    <Typography
+                      sx={{
+                        cursor: 'pointer',
+                        color: 'primary.main',
+                        '&:hover': {
+                          textDecoration: 'underline',
+                          color: 'primary.dark'
+                        }
+                      }}
+                      onClick={() => navigate(`/problem/${problem._id}`)}
+                    >
+                      {problem.title}
+                    </Typography>
+                  </TableCell>
                   <TableCell>
                     <Chip
                       label={problem.difficulty}
@@ -218,6 +277,91 @@ const AdminDashboard = () => {
                 <MenuItem value="Medium">Medium</MenuItem>
                 <MenuItem value="Hard">Hard</MenuItem>
               </TextField>
+
+              <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+                Test Cases
+              </Typography>
+
+              {formData.testCases.map((testCase, index) => (
+                <Paper key={index} elevation={1} sx={{ p: 2, mb: 2 }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle1" gutterBottom>
+                        Test Case {index + 1}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Input"
+                        value={testCase.input}
+                        onChange={(e) =>
+                          handleTestCaseChange(index, 'input', e.target.value)
+                        }
+                        multiline
+                        rows={2}
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Expected Output"
+                        value={testCase.output}
+                        onChange={(e) =>
+                          handleTestCaseChange(index, 'output', e.target.value)
+                        }
+                        multiline
+                        rows={2}
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Explanation"
+                        value={testCase.explanation}
+                        onChange={(e) =>
+                          handleTestCaseChange(index, 'explanation', e.target.value)
+                        }
+                        multiline
+                        rows={2}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={testCase.isHidden}
+                              onChange={(e) =>
+                                handleTestCaseChange(index, 'isHidden', e.target.checked)
+                              }
+                            />
+                          }
+                          label="Hidden Test Case"
+                        />
+                        <IconButton
+                          color="error"
+                          onClick={() => removeTestCase(index)}
+                          disabled={formData.testCases.length === 1}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Paper>
+              ))}
+
+              <Button
+                startIcon={<AddIcon />}
+                onClick={addTestCase}
+                variant="outlined"
+                sx={{ mt: 2, mb: 2 }}
+              >
+                Add Test Case
+              </Button>
             </Box>
           </DialogContent>
           <DialogActions>
