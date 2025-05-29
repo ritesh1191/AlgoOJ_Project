@@ -15,12 +15,20 @@ import {
   Divider,
   Card,
   CardContent,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
+  AlertTitle,
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import SendIcon from '@mui/icons-material/Send';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import './ProblemDetail.css';
+import { runCode, submitAndEvaluate } from '../services/codeExecutionService';
 
 const languageOptions = {
   python: {
@@ -47,13 +55,23 @@ function ProblemDetail() {
   const [code, setCode] = useState(languageOptions.python.defaultCode);
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [output, setOutput] = useState('');
+  const [customInput, setCustomInput] = useState('');
+  const [customOutput, setCustomOutput] = useState('');
+  const [submissionResults, setSubmissionResults] = useState(null);
+  const [showResults, setShowResults] = useState(false);
 
   useEffect(() => {
     const fetchProblem = async () => {
       try {
         const response = await axios.get(`http://localhost:5001/api/problems/${id}`);
         setProblem(response.data);
+        if (response.data.testCases && response.data.testCases.length > 0) {
+          const visibleTestCase = response.data.testCases.find(tc => tc.isVisible);
+          if (visibleTestCase) {
+            setCustomInput(visibleTestCase.input);
+            setCustomOutput('');
+          }
+        }
       } catch (error) {
         toast.error('Failed to load problem details');
         console.error('Error fetching problem:', error);
@@ -75,16 +93,12 @@ function ProblemDetail() {
   const handleRun = async () => {
     setIsRunning(true);
     try {
-      const response = await axios.post('http://localhost:5001/api/code/run', {
-        code,
-        language,
-        problemId: id,
-      });
-      setOutput(response.data.output);
+      const result = await runCode(code, language, customInput);
+      setCustomOutput(result.output);
       toast.success('Code executed successfully!');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to run code');
-      setOutput(error.response?.data?.error || 'Execution failed');
+      toast.error(error.message || 'Failed to run code');
+      setCustomOutput(error.message || 'Execution failed');
     } finally {
       setIsRunning(false);
     }
@@ -93,20 +107,79 @@ function ProblemDetail() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const response = await axios.post('http://localhost:5001/api/code/submit', {
-        code,
-        language,
-        problemId: id,
-      });
-      toast.success(response.data.message);
-      setOutput(response.data.output);
+      const result = await submitAndEvaluate(code, language, problem.testCases);
+      setSubmissionResults(result);
+      setShowResults(true);
+      
+      if (result.success) {
+        toast.success('All test cases passed!');
+      } else {
+        toast.error('Some test cases failed');
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to submit code');
-      setOutput(error.response?.data?.error || 'Submission failed');
+      toast.error(error.message || 'Failed to submit code');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const ResultsDialog = () => (
+    <Dialog 
+      open={showResults} 
+      onClose={() => setShowResults(false)}
+      maxWidth="md"
+      fullWidth
+    >
+      <DialogTitle>
+        Submission Results
+        {submissionResults?.success ? (
+          <Alert severity="success" sx={{ mt: 1 }}>
+            <AlertTitle>Success</AlertTitle>
+            All test cases passed!
+          </Alert>
+        ) : (
+          <Alert severity="error" sx={{ mt: 1 }}>
+            <AlertTitle>Failed</AlertTitle>
+            Some test cases failed
+          </Alert>
+        )}
+      </DialogTitle>
+      <DialogContent>
+        {submissionResults?.results.map((result, index) => (
+          <Card key={index} sx={{ mb: 2 }}>
+            <CardContent>
+              <Typography variant="h6" color={result.passed ? "success.main" : "error.main"}>
+                Test Case {index + 1} {result.passed ? "✓" : "✗"}
+              </Typography>
+              {!result.isHidden && (
+                <>
+                  <Typography variant="subtitle2" color="text.secondary">Input:</Typography>
+                  <pre>{result.input}</pre>
+                  <Typography variant="subtitle2" color="text.secondary">Expected Output:</Typography>
+                  <pre>{result.expectedOutput}</pre>
+                  <Typography variant="subtitle2" color="text.secondary">Your Output:</Typography>
+                  <pre>{result.actualOutput}</pre>
+                </>
+              )}
+              {result.isHidden && (
+                <Typography color="text.secondary">
+                  This is a hidden test case. {result.passed ? "Your solution passed!" : "Your solution failed."}
+                </Typography>
+              )}
+              {result.error && (
+                <Alert severity="error" sx={{ mt: 1 }}>
+                  {result.error}
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setShowResults(false)}>Close</Button>
+      </DialogActions>
+    </Dialog>
+  );
 
   if (!problem) {
     return (
@@ -265,26 +338,24 @@ function ProblemDetail() {
             </LoadingButton>
           </Box>
 
-          {output && (
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2,
-                bgcolor: 'grey.50',
-                maxHeight: '150px',
-                overflow: 'auto'
-              }}
-            >
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Output:
-              </Typography>
-              <Box sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
-                {output}
-              </Box>
-            </Paper>
-          )}
+          <div className="custom-io-container">
+            <div className="custom-input">
+              <h4>Input:</h4>
+              <textarea
+                value={customInput}
+                onChange={(e) => setCustomInput(e.target.value)}
+                placeholder="Enter your input here..."
+                rows={4}
+              />
+            </div>
+            <div className="custom-output">
+              <h4>Output:</h4>
+              <pre>{customOutput}</pre>
+            </div>
+          </div>
         </Box>
       </Box>
+      <ResultsDialog />
     </Box>
   );
 }
