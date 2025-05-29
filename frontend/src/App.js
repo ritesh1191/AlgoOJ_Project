@@ -12,6 +12,8 @@ import CreateProblem from './components/CreateProblem';
 import ProblemDetail from './components/ProblemDetail';
 import Navbar from './components/Navbar';
 import authService from './services/auth.service';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const PrivateRoute = ({ children, requiredRole }) => {
   const user = authService.getCurrentUser();
@@ -232,6 +234,17 @@ function App() {
             },
             duration: 3000,
           }}
+        />
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
         />
         <Routes>
           <Route path="/login" element={<Login />} />

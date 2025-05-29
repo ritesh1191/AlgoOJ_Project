@@ -1,5 +1,5 @@
 import axios from 'axios';
-import toast from 'react-hot-toast';
+import { toast } from 'react-toastify';
 
 const API_URL = 'http://localhost:5001/api/auth';
 
@@ -53,7 +53,6 @@ const login = async (email, password) => {
 
 const logout = () => {
   localStorage.removeItem('user');
-  toast.success('Logged out successfully! See you soon! 👋');
 };
 
 const getCurrentUser = () => {

@@ -1,246 +1,292 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import Editor from '@monaco-editor/react';
 import {
   Container,
+  Paper,
   Typography,
   Box,
-  Paper,
-  Chip,
-  Divider,
-  CircularProgress,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   Grid,
+  Divider,
   Card,
   CardContent,
-  Button,
 } from '@mui/material';
-import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
-import { Link } from 'react-router-dom';
-import problemService from '../services/problem.service';
+import { LoadingButton } from '@mui/lab';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import SendIcon from '@mui/icons-material/Send';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
-const ProblemDetail = () => {
+const languageOptions = {
+  python: {
+    name: 'Python',
+    extension: '.py',
+    defaultCode: '# Write your Python code here\n\ndef solve():\n    # Your solution here\n    pass\n',
+  },
+  cpp: {
+    name: 'C++',
+    extension: '.cpp',
+    defaultCode: '#include <iostream>\nusing namespace std;\n\nint main() {\n    // Your solution here\n    return 0;\n}\n',
+  },
+  java: {
+    name: 'Java',
+    extension: '.java',
+    defaultCode: 'public class Solution {\n    public static void main(String[] args) {\n        // Your solution here\n    }\n}\n',
+  },
+};
+
+function ProblemDetail() {
   const { id } = useParams();
   const [problem, setProblem] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [language, setLanguage] = useState('python');
+  const [code, setCode] = useState(languageOptions.python.defaultCode);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [output, setOutput] = useState('');
 
   useEffect(() => {
     const fetchProblem = async () => {
       try {
-        const data = await problemService.getProblemById(id);
-        setProblem(data);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to fetch problem details');
-        setLoading(false);
+        const response = await axios.get(`http://localhost:5001/api/problems/${id}`);
+        setProblem(response.data);
+      } catch (error) {
+        toast.error('Failed to load problem details');
+        console.error('Error fetching problem:', error);
       }
     };
-
     fetchProblem();
   }, [id]);
 
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'Easy':
-        return 'success';
-      case 'Medium':
-        return 'warning';
-      case 'Hard':
-        return 'error';
-      default:
-        return 'default';
+  const handleLanguageChange = (event) => {
+    const newLanguage = event.target.value;
+    setLanguage(newLanguage);
+    setCode(languageOptions[newLanguage].defaultCode);
+  };
+
+  const handleEditorChange = (value) => {
+    setCode(value);
+  };
+
+  const handleRun = async () => {
+    setIsRunning(true);
+    try {
+      const response = await axios.post('http://localhost:5001/api/code/run', {
+        code,
+        language,
+        problemId: id,
+      });
+      setOutput(response.data.output);
+      toast.success('Code executed successfully!');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to run code');
+      setOutput(error.response?.data?.error || 'Execution failed');
+    } finally {
+      setIsRunning(false);
     }
   };
 
-  if (loading) {
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const response = await axios.post('http://localhost:5001/api/code/submit', {
+        code,
+        language,
+        problemId: id,
+      });
+      toast.success(response.data.message);
+      setOutput(response.data.output);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to submit code');
+      setOutput(error.response?.data?.error || 'Submission failed');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!problem) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-        <CircularProgress size={40} thickness={4} />
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Typography>Loading...</Typography>
       </Box>
     );
   }
-
-  if (error || !problem) {
-    return (
-      <Container maxWidth="lg">
-        <Box sx={{ mt: 4 }}>
-          <Paper elevation={1} sx={{ p: 4, textAlign: 'center', borderRadius: 2 }}>
-            <Typography color="error.main" variant="h6">
-              {error || 'Problem not found'}
-            </Typography>
-          </Paper>
-        </Box>
-      </Container>
-    );
-  }
-
-  // Filter out hidden test cases for non-admin users
-  const visibleTestCases = problem.testCases.filter(testCase => !testCase.isHidden);
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ mt: 4, mb: 6 }}>
-        {/* Back Button */}
-        <Button
-          component={Link}
-          to="/"
-          startIcon={<ArrowBackIcon />}
-          sx={{ mb: 4 }}
-          color="inherit"
-        >
-          Back to Problems
-        </Button>
+    <Box sx={{ height: 'calc(100vh - 64px)', display: 'flex' }}>
+      {/* Problem Description Section */}
+      <Box 
+        sx={{ 
+          width: '35%',
+          height: '100%',
+          overflow: 'auto',
+          borderRight: 1,
+          borderColor: 'divider',
+          bgcolor: 'background.default',
+          p: 4
+        }}
+      >
+        <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
+          {problem.title}
+        </Typography>
+        
+        <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4, lineHeight: 1.7 }}>
+          {problem.description}
+        </Typography>
 
-        <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden' }}>
-          {/* Problem Header */}
-          <Box 
-            sx={{ 
-              p: 4, 
-              background: 'linear-gradient(45deg, rgba(37, 99, 235, 0.03) 0%, rgba(124, 58, 237, 0.03) 100%)',
-              borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
-            }}
-          >
-            <Typography 
-              variant="h4" 
-              component="h1" 
-              gutterBottom 
+        <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+          Sample Test Cases
+        </Typography>
+        
+        {problem.testCases?.map((testCase, index) => (
+          !testCase.isHidden && (
+            <Card 
+              key={index} 
+              variant="outlined" 
               sx={{ 
-                fontWeight: 700,
-                color: 'text.primary',
-                mb: 2
+                mb: 2,
+                boxShadow: 'none',
+                border: '1px solid',
+                borderColor: 'divider'
               }}
             >
-              {problem.title}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Chip
-                label={problem.difficulty}
-                color={getDifficultyColor(problem.difficulty)}
-                sx={{ 
-                  fontWeight: 500,
-                  px: 1
-                }}
-              />
-            </Box>
-          </Box>
-
-          {/* Problem Description */}
-          <Box sx={{ p: 4 }}>
-            <Typography 
-              variant="h6" 
-              gutterBottom 
-              sx={{ 
-                fontWeight: 600,
-                color: 'text.primary',
-                mb: 2
-              }}
-            >
-              Description
-            </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                whiteSpace: 'pre-line',
-                color: 'text.secondary',
-                lineHeight: 1.7
-              }}
-            >
-              {problem.description}
-            </Typography>
-          </Box>
-
-          <Divider sx={{ mx: 4 }} />
-
-          {/* Test Cases */}
-          <Box sx={{ p: 4 }}>
-            <Typography 
-              variant="h6" 
-              gutterBottom 
-              sx={{ 
-                fontWeight: 600,
-                color: 'text.primary',
-                mb: 3
-              }}
-            >
-              Example Test Cases
-            </Typography>
-            <Grid container spacing={3}>
-              {visibleTestCases.map((testCase, index) => (
-                <Grid item xs={12} key={index}>
-                  <Card 
-                    variant="outlined" 
-                    sx={{ 
-                      borderRadius: 2,
-                      transition: 'all 0.2s',
-                      '&:hover': {
-                        borderColor: 'primary.main',
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                      }
-                    }}
-                  >
-                    <CardContent>
-                      <Typography 
-                        variant="h6" 
-                        color="primary" 
-                        gutterBottom
-                        sx={{ 
-                          fontWeight: 600,
-                          fontSize: '1.1rem',
-                          mb: 2
-                        }}
-                      >
-                        Test Case {index + 1}
-                      </Typography>
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} md={6}>
-                          <Typography 
-                            variant="body2" 
-                            component="div" 
-                            sx={{ mb: 2 }}
-                          >
-                            <Box component="span" sx={{ fontWeight: 600, color: 'text.primary', mr: 1 }}>
-                              Input:
-                            </Box>
-                            <Box component="span" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
-                              {testCase.input}
-                            </Box>
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                          <Typography 
-                            variant="body2" 
-                            component="div" 
-                            sx={{ mb: 2 }}
-                          >
-                            <Box component="span" sx={{ fontWeight: 600, color: 'text.primary', mr: 1 }}>
-                              Output:
-                            </Box>
-                            <Box component="span" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
-                              {testCase.output}
-                            </Box>
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                      {testCase.explanation && (
-                        <Typography variant="body2" component="div" sx={{ mt: 1 }}>
-                          <Box component="span" sx={{ fontWeight: 600, color: 'text.primary', mr: 1 }}>
-                            Explanation:
-                          </Box>
-                          <Box component="span" sx={{ color: 'text.secondary' }}>
-                            {testCase.explanation}
-                          </Box>
-                        </Typography>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        </Paper>
+              <CardContent>
+                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                  Input:
+                </Typography>
+                <Box 
+                  sx={{ 
+                    p: 2,
+                    bgcolor: 'grey.50',
+                    borderRadius: 1,
+                    mb: 2,
+                    fontFamily: 'monospace',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  {testCase.input}
+                </Box>
+                
+                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                  Expected Output:
+                </Typography>
+                <Box 
+                  sx={{ 
+                    p: 2,
+                    bgcolor: 'grey.50',
+                    borderRadius: 1,
+                    fontFamily: 'monospace',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  {testCase.output}
+                </Box>
+              </CardContent>
+            </Card>
+          )
+        ))}
       </Box>
-    </Container>
+
+      {/* Code Editor Section */}
+      <Box 
+        sx={{ 
+          width: '65%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          bgcolor: 'background.paper'
+        }}
+      >
+        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>Language</InputLabel>
+            <Select value={language} onChange={handleLanguageChange} label="Language">
+              <MenuItem value="python">Python</MenuItem>
+              <MenuItem value="cpp">C++</MenuItem>
+              <MenuItem value="java">Java</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+
+        <Box sx={{ flex: 1, position: 'relative' }}>
+          <Editor
+            height="100%"
+            language={language}
+            value={code}
+            theme="vs-dark"
+            onChange={handleEditorChange}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              padding: { top: 20 },
+              lineNumbers: 'on',
+            }}
+          />
+        </Box>
+
+        <Box 
+          sx={{ 
+            p: 2,
+            borderTop: 1,
+            borderColor: 'divider',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2
+          }}
+        >
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <LoadingButton
+              variant="contained"
+              color="primary"
+              onClick={handleRun}
+              loading={isRunning}
+              loadingPosition="start"
+              startIcon={<PlayArrowIcon />}
+              sx={{ minWidth: 120 }}
+            >
+              Run
+            </LoadingButton>
+            <LoadingButton
+              variant="contained"
+              color="secondary"
+              onClick={handleSubmit}
+              loading={isSubmitting}
+              loadingPosition="start"
+              startIcon={<SendIcon />}
+              sx={{ minWidth: 120 }}
+            >
+              Submit
+            </LoadingButton>
+          </Box>
+
+          {output && (
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2,
+                bgcolor: 'grey.50',
+                maxHeight: '150px',
+                overflow: 'auto'
+              }}
+            >
+              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                Output:
+              </Typography>
+              <Box sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
+                {output}
+              </Box>
+            </Paper>
+          )}
+        </Box>
+      </Box>
+    </Box>
   );
-};
+}
 
 export default ProblemDetail; 
