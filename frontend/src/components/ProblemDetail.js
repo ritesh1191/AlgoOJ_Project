@@ -114,6 +114,35 @@ function ProblemDetail() {
       setSubmissionResults(result);
       setShowResults(true);
       
+      // Record the submission
+      const submissionData = {
+        problemId: problem._id,
+        code,
+        language,
+        status: result.success ? 'Accepted' : 'Wrong Answer',
+        testCasesPassed: result.results.filter(r => r.passed).length,
+        totalTestCases: result.results.length,
+        executionTime: result.results.reduce((acc, r) => acc + (r.executionTime || 0), 0),
+        memory: result.results.reduce((acc, r) => acc + (r.memory || 0), 0)
+      };
+
+      try {
+        const response = await axios.post(
+          'http://localhost:5001/api/submissions',
+          submissionData,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authService.getCurrentUser()?.token}`
+            }
+          }
+        );
+        console.log('Submission recorded:', response.data);
+      } catch (error) {
+        console.error('Failed to record submission:', error);
+        toast.error(`Failed to record submission: ${error.response?.data?.message || error.message}`);
+      }
+      
       if (result.success) {
         toast.success('All test cases passed!');
       } else {

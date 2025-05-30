@@ -23,8 +23,9 @@ import {
   FormControlLabel,
   Switch,
   Divider,
+  InputAdornment,
 } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
+import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon, Search as SearchIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import problemService from '../services/problem.service';
@@ -32,6 +33,7 @@ import problemService from '../services/problem.service';
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [problems, setProblems] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [formData, setFormData] = useState({
@@ -53,6 +55,15 @@ const AdminDashboard = () => {
       toast.error('Failed to fetch problems');
     }
   };
+
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const filteredProblems = problems.filter(problem =>
+    problem.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    problem.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleOpen = (problem = null) => {
     if (problem) {
@@ -166,7 +177,7 @@ const AdminDashboard = () => {
   return (
     <Container maxWidth="lg">
       <Box sx={{ mt: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h4" component="h1">
             Problem Management
           </Typography>
@@ -180,6 +191,25 @@ const AdminDashboard = () => {
           </Button>
         </Box>
 
+        {/* Search Bar */}
+        <Box sx={{ mb: 3 }}>
+          <TextField
+            fullWidth
+            placeholder="Search problems by title or description..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            variant="outlined"
+            size="small"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
+
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -190,7 +220,16 @@ const AdminDashboard = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {problems.map((problem) => (
+              {filteredProblems.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} align="center">
+                    <Typography color="text.secondary" sx={{ py: 3 }}>
+                      No problems found matching your search.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredProblems.map((problem) => (
                 <TableRow key={problem._id}>
                   <TableCell>
                     <Typography
@@ -229,7 +268,8 @@ const AdminDashboard = () => {
                     </IconButton>
                   </TableCell>
                 </TableRow>
-              ))}
+                ))
+              )}
             </TableBody>
           </Table>
         </TableContainer>

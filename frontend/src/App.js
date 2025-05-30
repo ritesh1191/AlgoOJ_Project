@@ -10,6 +10,7 @@ import Home from './components/Home';
 import AdminDashboard from './components/AdminDashboard';
 import CreateProblem from './components/CreateProblem';
 import ProblemDetail from './components/ProblemDetail';
+import UserSubmissionsPage from './pages/UserSubmissions';
 import Navbar from './components/Navbar';
 import authService from './services/auth.service';
 import { ToastContainer } from 'react-toastify';
@@ -251,6 +252,14 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<Home />} />
           <Route path="/problem/:id" element={<ProblemDetail />} />
+          <Route
+            path="/submissions"
+            element={
+              <PrivateRoute>
+                <UserSubmissionsPage />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/admin"
             element={

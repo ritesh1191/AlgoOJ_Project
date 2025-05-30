@@ -107,6 +107,20 @@ const Navbar = () => {
             {user ? (
               // Show these links when user is logged in
               <>
+                <Button
+                  component={Link}
+                  to="/submissions"
+                  sx={{
+                    color: 'text.primary',
+                    fontWeight: 500,
+                    '&:hover': {
+                      color: 'primary.main',
+                      backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                    },
+                  }}
+                >
+                  My Submissions
+                </Button>
                 {user.role === 'admin' && (
                   <>
                     <Button
