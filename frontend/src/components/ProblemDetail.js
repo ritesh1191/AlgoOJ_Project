@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import {
   Container,
@@ -29,6 +29,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import './ProblemDetail.css';
 import { runCode, submitAndEvaluate } from '../services/codeExecutionService';
+import authService from '../services/auth.service';
 
 const languageOptions = {
   python: {
@@ -39,7 +40,7 @@ const languageOptions = {
   cpp: {
     name: 'C++',
     extension: '.cpp',
-    defaultCode: '#include <iostream>\nusing namespace std;\n\nint main() {\n    // Your solution here\n    return 0;\n}\n',
+    defaultCode: '#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Your solution here\n    return 0;\n}\n',
   },
   java: {
     name: 'Java',
@@ -50,15 +51,17 @@ const languageOptions = {
 
 function ProblemDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [problem, setProblem] = useState(null);
-  const [language, setLanguage] = useState('python');
-  const [code, setCode] = useState(languageOptions.python.defaultCode);
+  const [language, setLanguage] = useState('cpp');
+  const [code, setCode] = useState(languageOptions.cpp.defaultCode);
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customInput, setCustomInput] = useState('');
   const [customOutput, setCustomOutput] = useState('');
   const [submissionResults, setSubmissionResults] = useState(null);
   const [showResults, setShowResults] = useState(false);
+  const user = authService.getCurrentUser();
 
   useEffect(() => {
     const fetchProblem = async () => {
@@ -66,7 +69,7 @@ function ProblemDetail() {
         const response = await axios.get(`http://localhost:5001/api/problems/${id}`);
         setProblem(response.data);
         if (response.data.testCases && response.data.testCases.length > 0) {
-          const visibleTestCase = response.data.testCases.find(tc => tc.isVisible);
+          const visibleTestCase = response.data.testCases.find(tc => !tc.isHidden);
           if (visibleTestCase) {
             setCustomInput(visibleTestCase.input);
             setCustomOutput('');
@@ -121,6 +124,10 @@ function ProblemDetail() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleLoginRedirect = () => {
+    navigate('/login');
   };
 
   const ResultsDialog = () => (
@@ -299,6 +306,24 @@ function ProblemDetail() {
               automaticLayout: true,
               padding: { top: 20 },
               lineNumbers: 'on',
+              quickSuggestions: true,
+              suggestOnTriggerCharacters: true,
+              acceptSuggestionOnEnter: "on",
+              tabCompletion: "on",
+              wordBasedSuggestions: true,
+              parameterHints: {
+                enabled: true
+              },
+              suggest: {
+                showKeywords: true,
+                showSnippets: true,
+                showClasses: true,
+                showFunctions: true,
+                showVariables: true,
+                showWords: true,
+                showMethods: true,
+                showProperties: true
+              }
             }}
           />
         </Box>
@@ -313,6 +338,16 @@ function ProblemDetail() {
             gap: 2
           }}
         >
+          {!user ? (
+            <Alert severity="info" action={
+              <Button color="inherit" size="small" onClick={handleLoginRedirect}>
+                Login
+              </Button>
+            }>
+              Please login to run or submit your code
+            </Alert>
+          ) : null}
+          
           <Box sx={{ display: 'flex', gap: 2 }}>
             <LoadingButton
               variant="contained"
@@ -322,6 +357,7 @@ function ProblemDetail() {
               loadingPosition="start"
               startIcon={<PlayArrowIcon />}
               sx={{ minWidth: 120 }}
+              disabled={!user}
             >
               Run
             </LoadingButton>
@@ -333,6 +369,7 @@ function ProblemDetail() {
               loadingPosition="start"
               startIcon={<SendIcon />}
               sx={{ minWidth: 120 }}
+              disabled={!user}
             >
               Submit
             </LoadingButton>
@@ -346,6 +383,7 @@ function ProblemDetail() {
                 onChange={(e) => setCustomInput(e.target.value)}
                 placeholder="Enter your input here..."
                 rows={4}
+                disabled={!user}
               />
             </div>
             <div className="custom-output">

@@ -15,6 +15,10 @@ import {
   Card,
   CardContent,
   Grid,
+  FormControl,
+  Select,
+  MenuItem,
+  InputLabel,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import problemService from '../services/problem.service';
@@ -23,6 +27,7 @@ const Home = () => {
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [difficultyFilter, setDifficultyFilter] = useState('all');
 
   useEffect(() => {
     const fetchProblems = async () => {
@@ -52,6 +57,14 @@ const Home = () => {
     }
   };
 
+  const handleDifficultyFilterChange = (event) => {
+    setDifficultyFilter(event.target.value);
+  };
+
+  const filteredProblems = problems.filter(problem => 
+    difficultyFilter === 'all' ? true : problem.difficulty === difficultyFilter
+  );
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
@@ -78,40 +91,59 @@ const Home = () => {
     <Container maxWidth="lg">
       <Box sx={{ mt: 6, mb: 6 }}>
         {/* Header Section */}
-        <Box sx={{ mb: 6, textAlign: 'center' }}>
-          <Typography 
-            variant="h3" 
-            component="h1" 
-            gutterBottom 
-            sx={{ 
-              fontWeight: 700,
-              background: 'linear-gradient(45deg, #2563eb 30%, #7c3aed 90%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              mb: 2
-            }}
-          >
-            Coding Problems
-          </Typography>
-          <Typography 
-            variant="h6" 
-            color="text.secondary" 
-            sx={{ 
-              maxWidth: '600px', 
-              mx: 'auto',
-              mb: 4,
-              fontWeight: 'normal'
-            }}
-          >
-            Enhance your coding skills by solving algorithmic challenges
-          </Typography>
+        <Box sx={{ mb: 6 }}>
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Typography 
+              variant="h3" 
+              component="h1" 
+              gutterBottom 
+              sx={{ 
+                fontWeight: 700,
+                background: 'linear-gradient(45deg, #2563eb 30%, #7c3aed 90%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                mb: 2
+              }}
+            >
+              Coding Problems
+            </Typography>
+            <Typography 
+              variant="h6" 
+              color="text.secondary" 
+              sx={{ 
+                maxWidth: '600px', 
+                mx: 'auto',
+                mb: 4,
+                fontWeight: 'normal'
+              }}
+            >
+              Enhance your coding skills by solving algorithmic challenges
+            </Typography>
+          </Box>
+
+          {/* Filter Controls */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Filter by Difficulty</InputLabel>
+              <Select
+                value={difficultyFilter}
+                onChange={handleDifficultyFilterChange}
+                label="Filter by Difficulty"
+              >
+                <MenuItem value="all">All Difficulties</MenuItem>
+                <MenuItem value="Easy">Easy</MenuItem>
+                <MenuItem value="Medium">Medium</MenuItem>
+                <MenuItem value="Hard">Hard</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
         </Box>
 
-        {problems.length === 0 ? (
+        {filteredProblems.length === 0 ? (
           <Card elevation={1} sx={{ borderRadius: 2, textAlign: 'center', py: 6 }}>
             <CardContent>
               <Typography variant="h6" color="text.secondary">
-                No problems available yet. Check back later!
+                {problems.length === 0 ? 'No problems available yet. Check back later!' : 'No problems match the selected filter.'}
               </Typography>
             </CardContent>
           </Card>
@@ -156,7 +188,7 @@ const Home = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {problems.map((problem, index) => (
+                {filteredProblems.map((problem, index) => (
                   <TableRow
                     key={problem._id}
                     hover
