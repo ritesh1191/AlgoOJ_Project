@@ -6,6 +6,9 @@ const submissionController = require('../controllers/submissionController');
 // Create a new submission
 router.post('/', auth, submissionController.createSubmission);
 
+// Get all submissions (admin only)
+router.get('/all', auth, submissionController.getAllSubmissions);
+
 // Get all submissions for the logged-in user
 router.get('/my-submissions', auth, submissionController.getUserSubmissions);
 

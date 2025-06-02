@@ -192,16 +192,15 @@ const Home = () => {
                   <TableRow
                     key={problem._id}
                     hover
-                    component={Link}
-                    to={`/problem/${problem._id}`}
                     sx={{
-                      textDecoration: 'none',
+                      cursor: 'pointer',
                       transition: 'all 0.2s',
                       '&:hover': {
                         backgroundColor: 'rgba(37, 99, 235, 0.04)',
                         transform: 'translateY(-1px)',
                       },
                     }}
+                    onClick={() => window.location.href = `/problem/${problem._id}`}
                   >
                     <TableCell sx={{ color: 'text.secondary', fontWeight: 500 }}>
                       {index + 1}

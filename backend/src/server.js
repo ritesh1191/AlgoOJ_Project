@@ -9,18 +9,33 @@ const submissionRoutes = require('./routes/submissionRoutes');
 
 const app = express();
 
+// Enable pre-flight requests for all routes
+app.options('*', cors());
+
 // CORS configuration
 app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true,
+  origin: ['http://localhost:3000', 'http://192.168.68.60:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  preflightContinue: true,
+  optionsSuccessStatus: 204
 }));
 
 app.use(express.json());
 
 // Request logging middleware
 app.use((req, res, next) => {
+  // Allow requests from both localhost and network IP
+  const allowedOrigins = ['http://localhost:3000', 'http://192.168.68.60:3000'];
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
   console.log(`${req.method} ${req.path}`);
   console.log('Headers:', req.headers);
   console.log('Body:', req.body);

@@ -73,13 +73,40 @@ exports.getSubmissionById = async (req, res) => {
     }
 
     // Check if the user is authorized to view this submission
-    if (submission.user._id.toString() !== req.user.id && !req.user.isAdmin) {
+    if (submission.user._id.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to view this submission' });
     }
 
     res.json(submission);
   } catch (error) {
     console.error('Error fetching submission:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get all submissions (admin only)
+exports.getAllSubmissions = async (req, res) => {
+  try {
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized. Admin access required.' });
+    }
+
+    const submissions = await Submission.find()
+      .populate({
+        path: 'user',
+        select: 'username'
+      })
+      .populate({
+        path: 'problem',
+        select: 'title difficulty'
+      })
+      .sort({ submittedAt: -1 });
+    
+    console.log('Submissions:', submissions); // Debug log
+    res.json(submissions);
+  } catch (error) {
+    console.error('Error fetching all submissions:', error);
     res.status(500).json({ message: 'Server error' });
   }
 }; 

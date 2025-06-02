@@ -139,6 +139,20 @@ const Navbar = () => {
                     </Button>
                     <Button
                       component={Link}
+                      to="/admin/all-submissions"
+                      sx={{
+                        color: 'text.primary',
+                        fontWeight: 500,
+                        '&:hover': {
+                          color: 'primary.main',
+                          backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                        },
+                      }}
+                    >
+                      All Submissions
+                    </Button>
+                    <Button
+                      component={Link}
                       to="/admin/create-problem"
                       sx={{
                         color: 'text.primary',
