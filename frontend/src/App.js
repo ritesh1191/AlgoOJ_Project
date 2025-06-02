@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme, CssBaseline, IconButton } from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material';
+import { Box, CssBaseline, IconButton } from '@mui/material';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { Toaster } from 'react-hot-toast';
@@ -12,10 +13,12 @@ import CreateProblem from './components/CreateProblem';
 import ProblemDetail from './components/ProblemDetail';
 import MySubmissions from './components/MySubmissions';
 import AllSubmissions from './components/AllSubmissions';
+import Profile from './components/Profile';
 import Navbar from './components/Navbar';
 import authService from './services/auth.service';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import baseTheme from './theme';
 
 const PrivateRoute = ({ children, requiredRole }) => {
   const user = authService.getCurrentUser();
@@ -34,32 +37,11 @@ function App() {
   const theme = useMemo(
     () =>
       createTheme({
+        ...baseTheme,
         palette: {
+          ...baseTheme.palette,
           mode,
-          ...(mode === 'light'
-            ? {
-                primary: {
-                  main: '#2563eb',
-                  light: '#60a5fa',
-                  dark: '#1e40af',
-                  contrastText: '#ffffff',
-                },
-                secondary: {
-                  main: '#7c3aed',
-                  light: '#a78bfa',
-                  dark: '#5b21b6',
-                  contrastText: '#ffffff',
-                },
-                background: {
-                  default: '#f8fafc',
-                  paper: '#ffffff',
-                },
-                text: {
-                  primary: '#0f172a',
-                  secondary: '#475569',
-                },
-              }
-            : {
+          ...(mode === 'dark' && {
                 primary: {
                   main: '#60a5fa',
                   light: '#93c5fd',
@@ -82,100 +64,6 @@ function App() {
                 },
               }),
         },
-        typography: {
-          fontFamily: [
-            'Inter',
-            '-apple-system',
-            'BlinkMacSystemFont',
-            '"Segoe UI"',
-            'Roboto',
-            'Arial',
-            'sans-serif',
-          ].join(','),
-          h1: {
-            fontWeight: 700,
-            letterSpacing: '-0.025em',
-          },
-          h2: {
-            fontWeight: 700,
-            letterSpacing: '-0.025em',
-          },
-          h3: {
-            fontWeight: 600,
-            letterSpacing: '-0.025em',
-          },
-          h4: {
-            fontWeight: 600,
-            letterSpacing: '-0.025em',
-          },
-          h5: {
-            fontWeight: 600,
-          },
-          h6: {
-            fontWeight: 600,
-          },
-          button: {
-            fontWeight: 500,
-            textTransform: 'none',
-          },
-        },
-        shape: {
-          borderRadius: 8,
-        },
-        components: {
-          MuiButton: {
-            styleOverrides: {
-              root: {
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontWeight: 500,
-                padding: '8px 16px',
-                boxShadow: 'none',
-                '&:hover': {
-                  boxShadow: 'none',
-                },
-              },
-              contained: {
-                '&:hover': {
-                  boxShadow: 'none',
-                },
-              },
-            },
-          },
-          MuiPaper: {
-            styleOverrides: {
-              root: {
-                boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-              },
-              elevation1: {
-                boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-              },
-              elevation2: {
-                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-              },
-              elevation3: {
-                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-              },
-            },
-          },
-          MuiCard: {
-            styleOverrides: {
-              root: {
-                boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-                '&:hover': {
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-                },
-              },
-            },
-          },
-          MuiChip: {
-            styleOverrides: {
-              root: {
-                fontWeight: 500,
-              },
-            },
-          },
-        },
       }),
     [mode]
   );
@@ -193,6 +81,64 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+          <Navbar />
+          <Box component="main" sx={{ mt: '70px', flexGrow: 1 }}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/problem/:id" element={<ProblemDetail />} />
+              <Route
+                path="/"
+                element={
+                  <PrivateRoute>
+                    <Home />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <PrivateRoute>
+                    <Profile />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <PrivateRoute requiredRole="admin">
+                    <AdminDashboard />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/admin/all-submissions"
+                element={
+                  <PrivateRoute requiredRole="admin">
+                    <AllSubmissions />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/admin/create-problem"
+                element={
+                  <PrivateRoute requiredRole="admin">
+                    <CreateProblem />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/my-submissions"
+                element={
+                  <PrivateRoute>
+                    <MySubmissions />
+                  </PrivateRoute>
+                }
+              />
+            </Routes>
+          </Box>
+        </Box>
         <IconButton
           sx={{
             position: 'fixed',
@@ -214,7 +160,6 @@ function App() {
         >
           {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
         </IconButton>
-        <Navbar />
         <Toaster
           position="top-right"
           toastOptions={{
@@ -248,51 +193,6 @@ function App() {
           draggable
           pauseOnHover
         />
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
-                <Home />
-              </PrivateRoute>
-            }
-          />
-          <Route path="/problem/:id" element={<ProblemDetail />} />
-          <Route
-            path="/my-submissions"
-            element={
-              <PrivateRoute>
-                <MySubmissions />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <PrivateRoute requiredRole="admin">
-                <AdminDashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin/all-submissions"
-            element={
-              <PrivateRoute requiredRole="admin">
-                <AllSubmissions />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin/create-problem"
-            element={
-              <PrivateRoute requiredRole="admin">
-                <CreateProblem />
-              </PrivateRoute>
-            }
-          />
-        </Routes>
       </Router>
     </ThemeProvider>
   );

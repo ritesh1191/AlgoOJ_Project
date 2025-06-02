@@ -12,14 +12,33 @@ import {
   Box,
   CircularProgress,
   Chip,
+  Link,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Stack,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
+import CodeIcon from '@mui/icons-material/Code';
+import SearchIcon from '@mui/icons-material/Search';
 import axios from 'axios';
 import { format } from 'date-fns';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const AllSubmissions = () => {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedCode, setSelectedCode] = useState(null);
+  const [codeDialogOpen, setCodeDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSubmissions = async () => {
@@ -29,11 +48,9 @@ const AllSubmissions = () => {
             'Authorization': `Bearer ${JSON.parse(localStorage.getItem('user')).token}`
           }
         });
-        console.log('Response data:', response.data); // Debug log
         setSubmissions(response.data);
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching submissions:', err); // Debug log
         setError(err.message);
         setLoading(false);
       }
@@ -41,6 +58,17 @@ const AllSubmissions = () => {
 
     fetchSubmissions();
   }, []);
+
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const filteredSubmissions = submissions.filter(submission => {
+    const searchLower = searchQuery.toLowerCase();
+    return searchQuery === '' ? true : 
+      (submission.problem?.title?.toLowerCase().includes(searchLower) || 
+       submission.problem?.description?.toLowerCase().includes(searchLower));
+  });
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -53,6 +81,38 @@ const AllSubmissions = () => {
       default:
         return 'default';
     }
+  };
+
+  const handleCodeClick = (code, language, problemId) => {
+    setSelectedCode({ code, language, problemId });
+    setCodeDialogOpen(true);
+  };
+
+  const handleCloseCodeDialog = () => {
+    setCodeDialogOpen(false);
+    setSelectedCode(null);
+  };
+
+  const handleMoveToEditor = () => {
+    if (selectedCode) {
+      // Store the code in localStorage
+      localStorage.setItem('savedCode', selectedCode.code);
+      localStorage.setItem('savedLanguage', selectedCode.language.toLowerCase());
+      
+      // Navigate to the problem page
+      navigate(`/problem/${selectedCode.problemId}`);
+    }
+  };
+
+  const getLanguageForPrism = (language) => {
+    const languageMap = {
+      'javascript': 'javascript',
+      'python': 'python',
+      'java': 'java',
+      'cpp': 'cpp',
+      'c': 'c',
+    };
+    return languageMap[language.toLowerCase()] || 'javascript';
   };
 
   if (loading) {
@@ -73,58 +133,160 @@ const AllSubmissions = () => {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 4 }}>
-        All Submissions
-      </Typography>
-      {submissions.length === 0 ? (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-          <Typography variant="h6" color="text.secondary">
-            No submissions found
-          </Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          All Submissions
+        </Typography>
+
+        {/* Search Box */}
+        <Box sx={{ maxWidth: '600px' }}>
+          <TextField
+            fullWidth
+            placeholder="Search by problem title or description..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+              },
+            }}
+          />
         </Box>
-      ) : (
-        <TableContainer component={Paper}>
-          <Table sx={{ minWidth: 650 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Submission ID</TableCell>
-                <TableCell>User</TableCell>
-                <TableCell>Problem</TableCell>
-                <TableCell>Language</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Time</TableCell>
-                <TableCell>Memory</TableCell>
-                <TableCell>Submitted At</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {submissions.map((submission) => (
-                <TableRow key={submission._id}>
-                  <TableCell>{submission._id}</TableCell>
-                  <TableCell>{submission.user?.username || 'Unknown User'}</TableCell>
-                  <TableCell>{submission.problem?.title || 'Unknown Problem'}</TableCell>
-                  <TableCell>{submission.language}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={submission.status || 'Unknown'}
-                      color={getStatusColor(submission.status)}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>{submission.executionTime || 0}ms</TableCell>
-                  <TableCell>{submission.memory || 0}KB</TableCell>
-                  <TableCell>
-                    {submission.createdAt ? 
-                      format(new Date(submission.createdAt), 'MMM dd, yyyy HH:mm:ss')
-                      : 'N/A'
-                    }
-                  </TableCell>
+
+        {filteredSubmissions.length === 0 ? (
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+            <Typography variant="h6" color="text.secondary">
+              {submissions.length === 0 ? 'No submissions found' : 'No submissions match your search'}
+            </Typography>
+          </Box>
+        ) : (
+          <TableContainer component={Paper} elevation={1} sx={{ borderRadius: 2 }}>
+            <Table sx={{ minWidth: 650 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Problem</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Language</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Submitted At</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Code</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+              </TableHead>
+              <TableBody>
+                {filteredSubmissions.map((submission) => (
+                  <TableRow 
+                    key={submission._id}
+                    hover
+                    sx={{
+                      '&:hover': {
+                        backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                      },
+                    }}
+                  >
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {submission.user?.username || 'Unknown User'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        component={RouterLink}
+                        to={`/problem/${submission.problem?._id}`}
+                        sx={{
+                          color: 'primary.main',
+                          textDecoration: 'none',
+                          '&:hover': {
+                            textDecoration: 'underline',
+                          },
+                        }}
+                      >
+                        {submission.problem?.title || 'Unknown Problem'}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{submission.language}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={submission.status || 'Unknown'}
+                        color={getStatusColor(submission.status)}
+                        size="small"
+                        sx={{ minWidth: '90px' }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {submission.createdAt ? 
+                        format(new Date(submission.createdAt), 'MMM dd, yyyy HH:mm:ss')
+                        : 'N/A'
+                      }
+                    </TableCell>
+                    <TableCell>
+                      <IconButton
+                        onClick={() => handleCodeClick(submission.code, submission.language, submission.problem?._id)}
+                        color="primary"
+                        size="small"
+                        title="View Code"
+                      >
+                        <CodeIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Box>
+
+      <Dialog
+        open={codeDialogOpen}
+        onClose={handleCloseCodeDialog}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            maxHeight: '90vh',
+          },
+        }}
+      >
+        <DialogTitle>
+          Submitted Code
+        </DialogTitle>
+        <DialogContent>
+          {selectedCode && (
+            <Box sx={{ mt: 2 }}>
+              <SyntaxHighlighter
+                language={getLanguageForPrism(selectedCode.language)}
+                style={materialDark}
+                customStyle={{
+                  margin: 0,
+                  borderRadius: '4px',
+                  maxHeight: '60vh',
+                }}
+              >
+                {selectedCode.code}
+              </SyntaxHighlighter>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Stack direction="row" spacing={2}>
+            <Button onClick={handleCloseCodeDialog}>Close</Button>
+            <Button 
+              variant="contained" 
+              color="primary"
+              onClick={handleMoveToEditor}
+            >
+              Move to Editor
+            </Button>
+          </Stack>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
