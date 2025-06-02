@@ -19,11 +19,8 @@ import {
   Select,
   MenuItem,
   InputLabel,
-  TextField,
-  InputAdornment,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
-import SearchIcon from '@mui/icons-material/Search';
 import problemService from '../services/problem.service';
 
 const Home = () => {
@@ -31,7 +28,6 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [difficultyFilter, setDifficultyFilter] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchProblems = async () => {
@@ -65,16 +61,9 @@ const Home = () => {
     setDifficultyFilter(event.target.value);
   };
 
-  const handleSearchChange = (event) => {
-    setSearchQuery(event.target.value);
-  };
-
-  const filteredProblems = problems.filter(problem => {
-    const matchesDifficulty = difficultyFilter === 'all' ? true : problem.difficulty === difficultyFilter;
-    const matchesSearch = problem.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         problem.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesDifficulty && matchesSearch;
-  });
+  const filteredProblems = problems.filter(problem => 
+    difficultyFilter === 'all' ? true : problem.difficulty === difficultyFilter
+  );
 
   if (loading) {
     return (
@@ -104,57 +93,36 @@ const Home = () => {
         {/* Header Section */}
         <Box sx={{ mb: 6 }}>
           <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Typography 
-            variant="h3" 
-            component="h1" 
-            gutterBottom 
-            sx={{ 
-              fontWeight: 700,
-              background: 'linear-gradient(45deg, #2563eb 30%, #7c3aed 90%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              mb: 2
-            }}
-          >
-            Coding Problems
-          </Typography>
-          <Typography 
-            variant="h6" 
-            color="text.secondary" 
-            sx={{ 
-              maxWidth: '600px', 
-              mx: 'auto',
-              mb: 4,
-              fontWeight: 'normal'
-            }}
-          >
-            Enhance your coding skills by solving algorithmic challenges
-          </Typography>
-        </Box>
-
-          {/* Search and Filter Controls */}
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            gap: 2,
-            mb: 3 
-          }}>
-            <TextField
-              placeholder="Search problems..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              variant="outlined"
-              size="small"
-              sx={{ flexGrow: 1, maxWidth: 500 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon color="action" />
-                  </InputAdornment>
-                ),
+            <Typography 
+              variant="h3" 
+              component="h1" 
+              gutterBottom 
+              sx={{ 
+                fontWeight: 700,
+                background: 'linear-gradient(45deg, #2563eb 30%, #7c3aed 90%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                mb: 2
               }}
-            />
+            >
+              Coding Problems
+            </Typography>
+            <Typography 
+              variant="h6" 
+              color="text.secondary" 
+              sx={{ 
+                maxWidth: '600px', 
+                mx: 'auto',
+                mb: 4,
+                fontWeight: 'normal'
+              }}
+            >
+              Enhance your coding skills by solving algorithmic challenges
+            </Typography>
+          </Box>
+
+          {/* Filter Controls */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
             <FormControl size="small" sx={{ minWidth: 200 }}>
               <InputLabel>Filter by Difficulty</InputLabel>
               <Select

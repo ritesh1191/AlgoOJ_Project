@@ -33,11 +33,11 @@ const submissionSchema = new mongoose.Schema({
     required: true
   },
   executionTime: {
-    type: Number,
+    type: Number,  // in milliseconds
     default: 0
   },
-  memory: {
-    type: Number,
+  memoryUsed: {
+    type: Number,  // in bytes
     default: 0
   },
   submittedAt: {

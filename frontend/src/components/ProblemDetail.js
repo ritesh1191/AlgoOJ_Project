@@ -30,6 +30,7 @@ import { toast } from 'react-toastify';
 import './ProblemDetail.css';
 import { runCode, submitAndEvaluate } from '../services/codeExecutionService';
 import authService from '../services/auth.service';
+import submissionService from '../services/submission.service';
 
 const languageOptions = {
   python: {
@@ -75,6 +76,18 @@ function ProblemDetail() {
             setCustomOutput('');
           }
         }
+
+        // Check for saved code from submissions
+        const savedCode = localStorage.getItem('savedCode');
+        const savedLanguage = localStorage.getItem('savedLanguage');
+        
+        if (savedCode && savedLanguage) {
+          setCode(savedCode);
+          setLanguage(savedLanguage);
+          // Clear the saved code after loading
+          localStorage.removeItem('savedCode');
+          localStorage.removeItem('savedLanguage');
+        }
       } catch (error) {
         toast.error('Failed to load problem details');
         console.error('Error fetching problem:', error);
@@ -109,47 +122,73 @@ function ProblemDetail() {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
+    
+    // Check if user is logged in
+    if (!user || !user.token) {
+      toast.error('Please login to submit your code');
+      setIsSubmitting(false);
+      return;
+    }
+    
     try {
+      console.log('Starting code evaluation...');
       const result = await submitAndEvaluate(code, language, problem.testCases);
+      console.log('Evaluation result:', result);
+      
       setSubmissionResults(result);
       setShowResults(true);
       
-      // Record the submission
-      const submissionData = {
-        problemId: problem._id,
-        code,
-        language,
-        status: result.success ? 'Accepted' : 'Wrong Answer',
-        testCasesPassed: result.results.filter(r => r.passed).length,
-        totalTestCases: result.results.length,
-        executionTime: result.results.reduce((acc, r) => acc + (r.executionTime || 0), 0),
-        memory: result.results.reduce((acc, r) => acc + (r.memory || 0), 0)
-      };
-
-      try {
-        const response = await axios.post(
-          'http://localhost:5001/api/submissions',
-          submissionData,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${authService.getCurrentUser()?.token}`
-            }
-          }
-        );
-        console.log('Submission recorded:', response.data);
-      } catch (error) {
-        console.error('Failed to record submission:', error);
-        toast.error(`Failed to record submission: ${error.response?.data?.message || error.message}`);
-      }
+      // Calculate the number of test cases passed
+      const testCasesPassed = result.results.filter(r => r.passed).length;
+      const totalTestCases = result.results.length;
       
-      if (result.success) {
-        toast.success('All test cases passed!');
-      } else {
-        toast.error('Some test cases failed');
+      // Create submission record with better error handling
+      try {
+        const submissionData = {
+          problemId: problem._id,
+          code,
+          language,
+          status: result.success ? 'Accepted' : 'Wrong Answer',
+          testCasesPassed,
+          totalTestCases,
+          executionTime: result.results[0]?.executionTime || 0,
+          memoryUsed: result.results[0]?.memoryUsed || 0
+        };
+        
+        console.log('Current user:', user);
+        console.log('Auth token:', user.token);
+        console.log('Submission data to be sent:', submissionData);
+        
+        const submission = await submissionService.createSubmission(submissionData);
+        console.log('Submission successful:', submission);
+        
+        if (result.success) {
+          toast.success('All test cases passed and submission stored!');
+        } else {
+          toast.warning('Some test cases failed, but submission was stored');
+        }
+      } catch (submissionError) {
+        console.error('Detailed submission error:', {
+          error: submissionError,
+          message: submissionError.message,
+          data: submissionError.response?.data,
+          status: submissionError.response?.status
+        });
+        
+        let errorMessage = 'Failed to store submission: ';
+        if (submissionError.response?.data?.message) {
+          errorMessage += submissionError.response.data.message;
+        } else if (submissionError.message) {
+          errorMessage += submissionError.message;
+        } else {
+          errorMessage += 'Unknown error occurred';
+        }
+        
+        toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error(error.message || 'Failed to submit code');
+      console.error('Code evaluation error:', error);
+      toast.error(`Failed to evaluate code: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }

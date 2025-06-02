@@ -3,16 +3,16 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const submissionController = require('../controllers/submissionController');
 
-// Create a new submission (requires authentication)
+// Create a new submission
 router.post('/', auth, submissionController.createSubmission);
 
-// Get user's submissions (requires authentication)
-router.get('/user', auth, submissionController.getUserSubmissions);
+// Get all submissions for the logged-in user
+router.get('/my-submissions', auth, submissionController.getUserSubmissions);
 
-// Get submissions for a specific problem (requires authentication)
+// Get all submissions for a specific problem
 router.get('/problem/:problemId', auth, submissionController.getProblemSubmissions);
 
-// Get all submissions (admin only)
-router.get('/all', auth, submissionController.getAllSubmissions);
+// Get submission by ID
+router.get('/:id', auth, submissionController.getSubmissionById);
 
 module.exports = router; 

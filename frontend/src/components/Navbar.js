@@ -109,7 +109,7 @@ const Navbar = () => {
               <>
                 <Button
                   component={Link}
-                  to="/submissions"
+                  to="/my-submissions"
                   sx={{
                     color: 'text.primary',
                     fontWeight: 500,
