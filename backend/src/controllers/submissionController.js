@@ -38,7 +38,7 @@ exports.createSubmission = async (req, res) => {
 exports.getUserSubmissions = async (req, res) => {
   try {
     const submissions = await Submission.find({ user: req.user.id })
-      .populate('problem', 'title difficulty')
+      .populate('problem', 'title difficulty description')
       .sort({ submittedAt: -1 });
     res.json(submissions);
   } catch (error) {

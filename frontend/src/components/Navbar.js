@@ -187,13 +187,13 @@ const Navbar = () => {
             </Button>
 
             {user && (
-              <Button
-                component={Link}
-                to="/my-submissions"
+                <Button
+                  component={Link}
+                  to="/my-submissions"
                 startIcon={<AssignmentIcon />}
-                sx={{
+                  sx={{
                   color: isCurrentPath('/my-submissions') ? 'primary.main' : 'text.primary',
-                  fontWeight: 500,
+                    fontWeight: 500,
                   px: 2,
                   py: 1,
                   borderRadius: 2,
@@ -209,18 +209,18 @@ const Navbar = () => {
                     bgcolor: 'primary.main',
                     transition: 'width 0.3s ease',
                   },
-                  '&:hover': {
+                    '&:hover': {
                     backgroundColor: (theme) => theme.palette.mode === 'dark'
                       ? 'rgba(96, 165, 250, 0.08)'
                       : 'rgba(37, 99, 235, 0.04)',
                     '&:before': {
                       width: '100%',
                     },
-                  },
-                }}
-              >
-                My Submissions
-              </Button>
+                    },
+                  }}
+                >
+                  My Submissions
+                </Button>
             )}
           </Box>
 

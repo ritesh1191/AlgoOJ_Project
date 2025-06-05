@@ -21,6 +21,7 @@ import {
   DialogActions,
   Alert,
   AlertTitle,
+  useTheme,
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -53,6 +54,7 @@ const languageOptions = {
 function ProblemDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const theme = useTheme();
   const [problem, setProblem] = useState(null);
   const [language, setLanguage] = useState('cpp');
   const [code, setCode] = useState(languageOptions.cpp.defaultCode);
@@ -265,7 +267,7 @@ function ProblemDetail() {
   }
 
   return (
-    <Box sx={{ height: 'calc(100vh - 64px)', display: 'flex' }}>
+    <Box sx={{ display: 'flex', height: 'calc(100vh - 70px)' }}>
       {/* Problem Description Section */}
       <Box 
         sx={{ 
@@ -282,7 +284,15 @@ function ProblemDetail() {
           {problem.title}
         </Typography>
         
-        <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4, lineHeight: 1.7 }}>
+        <Typography 
+          variant="body1" 
+          sx={{ 
+            color: 'text.secondary', 
+            mb: 4, 
+            lineHeight: 1.7,
+            whiteSpace: 'pre-line'
+          }}
+        >
           {problem.description}
         </Typography>
 
@@ -299,7 +309,8 @@ function ProblemDetail() {
                 mb: 2,
                 boxShadow: 'none',
                 border: '1px solid',
-                borderColor: 'divider'
+                borderColor: 'divider',
+                bgcolor: 'background.paper'
               }}
             >
               <CardContent>
@@ -309,11 +320,26 @@ function ProblemDetail() {
                 <Box 
                   sx={{ 
                     p: 2,
-                    bgcolor: 'grey.50',
+                    bgcolor: (theme) => theme.palette.mode === 'dark' 
+                      ? '#1e1e1e'  // Dark editor-like background
+                      : 'grey.50',
                     borderRadius: 1,
                     mb: 2,
                     fontFamily: 'monospace',
-                    fontSize: '0.875rem'
+                    fontSize: '0.875rem',
+                    color: (theme) => theme.palette.mode === 'dark'
+                      ? '#d4d4d4'  // Light grey text for dark mode
+                      : 'text.primary',
+                    border: '1px solid',
+                    borderColor: (theme) => theme.palette.mode === 'dark'
+                      ? '#2d2d2d'  // Darker border for dark mode
+                      : 'divider',
+                    whiteSpace: 'pre-wrap',  // Preserve line breaks and wrap text
+                    '&:hover': {
+                      bgcolor: (theme) => theme.palette.mode === 'dark'
+                        ? '#252525'  // Slightly lighter dark on hover
+                        : 'grey.100',
+                    }
                   }}
                 >
                   {testCase.input}
@@ -325,10 +351,25 @@ function ProblemDetail() {
                 <Box 
                   sx={{ 
                     p: 2,
-                    bgcolor: 'grey.50',
+                    bgcolor: (theme) => theme.palette.mode === 'dark' 
+                      ? '#1e1e1e'  // Dark editor-like background
+                      : 'grey.50',
                     borderRadius: 1,
                     fontFamily: 'monospace',
-                    fontSize: '0.875rem'
+                    fontSize: '0.875rem',
+                    color: (theme) => theme.palette.mode === 'dark'
+                      ? '#d4d4d4'  // Light grey text for dark mode
+                      : 'text.primary',
+                    border: '1px solid',
+                    borderColor: (theme) => theme.palette.mode === 'dark'
+                      ? '#2d2d2d'  // Darker border for dark mode
+                      : 'divider',
+                    whiteSpace: 'pre-wrap',  // Preserve line breaks and wrap text
+                    '&:hover': {
+                      bgcolor: (theme) => theme.palette.mode === 'dark'
+                        ? '#252525'  // Slightly lighter dark on hover
+                        : 'grey.100',
+                    }
                   }}
                 >
                   {testCase.output}
@@ -365,7 +406,7 @@ function ProblemDetail() {
             height="100%"
             language={language}
             value={code}
-            theme="vs-dark"
+            theme={theme.palette.mode === 'dark' ? 'vs-dark' : 'light'}
             onChange={handleEditorChange}
             options={{
               minimap: { enabled: false },

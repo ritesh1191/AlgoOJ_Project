@@ -259,7 +259,7 @@ const Home = () => {
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Hard Problems
-                </Typography>
+            </Typography>
               </Box>
             </Box>
           </Box>

@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const Problem = require('../models/Problem');
+const Submission = require('../models/Submission');
 
 // Get all problems
 exports.getAllProblems = async (req, res) => {
@@ -85,13 +86,21 @@ exports.updateProblem = async (req, res) => {
 // Delete problem (Admin only)
 exports.deleteProblem = async (req, res) => {
   try {
-    const problem = await Problem.findByIdAndDelete(req.params.id);
+    // First check if problem exists
+    const problem = await Problem.findById(req.params.id);
     if (!problem) {
       return res.status(404).json({ message: 'Problem not found' });
     }
-    res.json({ message: 'Problem deleted successfully' });
+
+    // Delete all submissions related to this problem
+    await Submission.deleteMany({ problem: req.params.id });
+
+    // Delete the problem using findByIdAndDelete
+    await Problem.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'Problem and related submissions deleted successfully' });
   } catch (error) {
-    console.error(error);
+    console.error('Error deleting problem:', error);
     res.status(500).json({ message: 'Server error' });
   }
 }; 

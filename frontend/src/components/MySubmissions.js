@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Container,
   Paper,
@@ -18,8 +18,13 @@ import {
   DialogActions,
   Button,
   Stack,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
-import { Visibility as VisibilityIcon } from '@mui/icons-material';
+import { 
+  Visibility as VisibilityIcon,
+  Search as SearchIcon,
+} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import submissionService from '../services/submission.service';
 import { toast } from 'react-toastify';
@@ -27,6 +32,8 @@ import Editor from '@monaco-editor/react';
 
 function MySubmissions() {
   const [submissions, setSubmissions] = useState([]);
+  const [filteredSubmissions, setFilteredSubmissions] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -36,16 +43,40 @@ function MySubmissions() {
     fetchSubmissions();
   }, []);
 
+  useMemo(() => {
+    if (!searchQuery.trim()) {
+      setFilteredSubmissions(submissions);
+      return;
+    }
+
+    const filtered = submissions.filter(submission => {
+      if (!submission?.problem) return false;
+      
+      const searchLower = searchQuery.toLowerCase().trim();
+      const title = submission.problem.title?.toLowerCase() || '';
+      const description = submission.problem.description?.toLowerCase() || '';
+      
+      return title.includes(searchLower) || description.includes(searchLower);
+    });
+    
+    setFilteredSubmissions(filtered);
+  }, [searchQuery, submissions]);
+
   const fetchSubmissions = async () => {
     try {
       const data = await submissionService.getUserSubmissions();
       setSubmissions(data);
+      setFilteredSubmissions(data);
     } catch (error) {
       toast.error('Failed to fetch submissions');
       console.error('Error fetching submissions:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
   };
 
   const handleViewCode = (submission) => {
@@ -96,9 +127,26 @@ function MySubmissions() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        My Submissions
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4">
+          My Submissions
+        </Typography>
+        <TextField
+          placeholder="Search by problem title or description"
+          value={searchQuery}
+          onChange={handleSearchChange}
+          variant="outlined"
+          size="small"
+          sx={{ width: '300px' }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
+      </Box>
       
       <TableContainer component={Paper}>
         <Table>
@@ -113,13 +161,13 @@ function MySubmissions() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {submissions.map((submission) => (
+            {filteredSubmissions.map((submission) => (
               <TableRow key={submission._id}>
                 <TableCell>
                   <Typography
                     variant="body2"
                     sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
-                    onClick={() => navigate(`/problems/${submission.problem._id}`)}
+                    onClick={() => navigate(`/problem/${submission.problem._id}`)}
                   >
                     {submission.problem.title}
                   </Typography>
@@ -150,6 +198,15 @@ function MySubmissions() {
                 </TableCell>
               </TableRow>
             ))}
+            {filteredSubmissions.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  <Typography variant="body2" color="text.secondary">
+                    {submissions.length === 0 ? 'No submissions found' : 'No matching submissions found'}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>

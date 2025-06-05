@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { Box, CssBaseline, IconButton } from '@mui/material';
@@ -32,7 +32,15 @@ const PrivateRoute = ({ children, requiredRole }) => {
 };
 
 function App() {
-  const [mode, setMode] = useState('light');
+  const [mode, setMode] = useState(() => {
+    // Read initial theme from localStorage, default to 'light' if not set
+    return localStorage.getItem('theme') || 'light';
+  });
+
+  // Save theme preference to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('theme', mode);
+  }, [mode]);
 
   const theme = useMemo(
     () =>
@@ -42,27 +50,27 @@ function App() {
           ...baseTheme.palette,
           mode,
           ...(mode === 'dark' && {
-                primary: {
-                  main: '#60a5fa',
-                  light: '#93c5fd',
-                  dark: '#2563eb',
-                  contrastText: '#ffffff',
-                },
-                secondary: {
-                  main: '#a78bfa',
-                  light: '#c4b5fd',
-                  dark: '#7c3aed',
-                  contrastText: '#ffffff',
-                },
-                background: {
-                  default: '#0f172a',
-                  paper: '#1e293b',
-                },
-                text: {
-                  primary: '#f8fafc',
-                  secondary: '#cbd5e1',
-                },
-              }),
+            primary: {
+              main: '#60a5fa',
+              light: '#93c5fd',
+              dark: '#2563eb',
+              contrastText: '#ffffff',
+            },
+            secondary: {
+              main: '#a78bfa',
+              light: '#c4b5fd',
+              dark: '#7c3aed',
+              contrastText: '#ffffff',
+            },
+            background: {
+              default: '#0f172a',
+              paper: '#1e293b',
+            },
+            text: {
+              primary: '#f8fafc',
+              secondary: '#cbd5e1',
+            },
+          }),
         },
       }),
     [mode]

@@ -6,6 +6,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const problemRoutes = require('./routes/problems');
 const submissionRoutes = require('./routes/submissionRoutes');
+const codeExecutionRoutes = require('./routes/codeExecutionRoutes');
 
 const app = express();
 
@@ -51,6 +52,7 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use('/api/auth', authRoutes);
 app.use('/api/problems', problemRoutes);
 app.use('/api/submissions', submissionRoutes);
+app.use('/api/code', codeExecutionRoutes);
 
 // 404 handler
 app.use((req, res, next) => {
@@ -85,4 +87,5 @@ app.listen(PORT, () => {
   console.log('- /api/auth/*');
   console.log('- /api/problems/*');
   console.log('- /api/submissions/*');
+  console.log('- /api/code/*');
 }); 
