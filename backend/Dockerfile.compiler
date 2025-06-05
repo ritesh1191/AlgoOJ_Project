@@ -1,0 +1,29 @@
+FROM ubuntu:20.04
+
+# Avoid prompts from apt
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install necessary packages
+RUN apt-get update && apt-get install -y \
+    g++ \
+    python3 \
+    python3-pip \
+    openjdk-11-jdk \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user for running code
+RUN useradd -m -d /home/coderunner coderunner
+RUN mkdir -p /code
+RUN chown coderunner:coderunner /code
+
+# Set working directory
+WORKDIR /code
+
+# Switch to non-root user
+USER coderunner
+
+# Set resource limits
+ENV MAX_EXECUTION_TIME=5
+ENV MAX_MEMORY=512M
+
+CMD ["sh", "-c", "tail -f /dev/null"] 

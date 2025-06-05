@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const setupTempDirectory = require('./utils/setupTemp');
+const dockerRunner = require('./utils/dockerRunner');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -43,10 +45,31 @@ app.use((req, res, next) => {
   next();
 });
 
+// Initialize Docker and temp directory
+async function initialize() {
+    try {
+        await setupTempDirectory();
+        await dockerRunner.initialize();
+        console.log('Docker and temp directory initialization completed');
+    } catch (error) {
+        console.error('Initialization error:', error);
+        process.exit(1);
+    }
+}
+
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/algoj', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
+.then(() => {
+    console.log('Connected to MongoDB');
+    initialize();
+})
+.catch((error) => {
+    console.error('MongoDB connection error:', error);
+    process.exit(1);
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -77,6 +100,19 @@ app.use((err, req, res, next) => {
       error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
+});
+
+// Cleanup on server shutdown
+process.on('SIGTERM', async () => {
+    console.log('Received SIGTERM. Cleaning up...');
+    await dockerRunner.stopContainer();
+    process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+    console.log('Received SIGINT. Cleaning up...');
+    await dockerRunner.stopContainer();
+    process.exit(0);
 });
 
 const PORT = process.env.PORT || 5001;

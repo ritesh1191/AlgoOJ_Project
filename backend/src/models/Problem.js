@@ -5,7 +5,7 @@ const testCaseSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  output: {
+  expectedOutput: {
     type: String,
     required: true
   },
@@ -43,5 +43,5 @@ const problemSchema = new mongoose.Schema({
   }
 });
 
-const Problem = mongoose.model('Problem', problemSchema);
-module.exports = Problem; 
+// Check if the model already exists before compiling
+module.exports = mongoose.models.Problem || mongoose.model('Problem', problemSchema); 

@@ -227,7 +227,7 @@ const Navbar = () => {
           {/* Auth Section */}
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             {user ? (
-              <>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <Chip
                   label={`Role: ${user.role || 'N/A'}`}
                   size="small"
@@ -325,46 +325,48 @@ const Navbar = () => {
                   transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                   anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                 >
-                  <MenuItem component={Link} to="/profile">
-                    <ListItemIcon>
-                      <PersonIcon fontSize="small" sx={{ color: 'text.primary' }} />
-                    </ListItemIcon>
-                    Profile
-                  </MenuItem>
-                  {user.role === 'admin' && (
-                    <>
-                      <Divider />
-                      <MenuItem component={Link} to="/admin">
-                        <ListItemIcon>
-                          <DashboardIcon fontSize="small" sx={{ color: 'text.primary' }} />
-                        </ListItemIcon>
-                        Admin Dashboard
-                      </MenuItem>
-                      <MenuItem component={Link} to="/admin/create-problem">
-                        <ListItemIcon>
-                          <AddIcon fontSize="small" sx={{ color: 'text.primary' }} />
-                        </ListItemIcon>
-                        Create Problem
-                      </MenuItem>
-                      <MenuItem component={Link} to="/admin/all-submissions">
-                        <ListItemIcon>
-                          <ListAltIcon fontSize="small" sx={{ color: 'text.primary' }} />
-                        </ListItemIcon>
-                        All Submissions
-                      </MenuItem>
-                    </>
-                  )}
-                  <Divider />
-                  <MenuItem onClick={handleLogout}>
-                    <ListItemIcon>
-                      <LogoutIcon fontSize="small" color="error" />
-                    </ListItemIcon>
-                    <Typography color="error">Logout</Typography>
-                  </MenuItem>
+                  <Box>
+                    <MenuItem component={Link} to="/profile">
+                      <ListItemIcon>
+                        <PersonIcon fontSize="small" sx={{ color: 'text.primary' }} />
+                      </ListItemIcon>
+                      Profile
+                    </MenuItem>
+                    {user.role === 'admin' && (
+                      <Box>
+                        <Divider />
+                        <MenuItem component={Link} to="/admin">
+                          <ListItemIcon>
+                            <DashboardIcon fontSize="small" sx={{ color: 'text.primary' }} />
+                          </ListItemIcon>
+                          Admin Dashboard
+                        </MenuItem>
+                        <MenuItem component={Link} to="/admin/create-problem">
+                          <ListItemIcon>
+                            <AddIcon fontSize="small" sx={{ color: 'text.primary' }} />
+                          </ListItemIcon>
+                          Create Problem
+                        </MenuItem>
+                        <MenuItem component={Link} to="/admin/all-submissions">
+                          <ListItemIcon>
+                            <ListAltIcon fontSize="small" sx={{ color: 'text.primary' }} />
+                          </ListItemIcon>
+                          All Submissions
+                        </MenuItem>
+                      </Box>
+                    )}
+                    <Divider />
+                    <MenuItem onClick={handleLogout}>
+                      <ListItemIcon>
+                        <LogoutIcon fontSize="small" color="error" />
+                      </ListItemIcon>
+                      <Typography color="error">Logout</Typography>
+                    </MenuItem>
+                  </Box>
                 </Menu>
-              </>
+              </Box>
             ) : (
-              <>
+              <Box sx={{ display: 'flex', gap: 2 }}>
                 <Button
                   component={Link}
                   to="/login"
@@ -405,7 +407,7 @@ const Navbar = () => {
                 >
                   Register
                 </Button>
-              </>
+              </Box>
             )}
           </Box>
         </Toolbar>
