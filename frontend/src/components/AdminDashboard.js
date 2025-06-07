@@ -38,7 +38,7 @@ const AdminDashboard = () => {
     title: '',
     description: '',
     difficulty: 'Easy',
-    testCases: [{ input: '', output: '', explanation: '', isHidden: false }]
+    testCases: [{ input: '', expectedOutput: '', explanation: '', isHidden: false }]
   });
 
   useEffect(() => {
@@ -69,7 +69,7 @@ const AdminDashboard = () => {
         title: '',
         description: '',
         difficulty: 'Easy',
-        testCases: [{ input: '', output: '', explanation: '', isHidden: false }]
+        testCases: [{ input: '', expectedOutput: '', explanation: '', isHidden: false }]
       });
     }
     setOpen(true);
@@ -143,7 +143,7 @@ const AdminDashboard = () => {
         ...formData.testCases,
         {
           input: '',
-          output: '',
+          expectedOutput: '',
           explanation: '',
           isHidden: false,
         },
@@ -307,9 +307,9 @@ const AdminDashboard = () => {
                       <TextField
                         fullWidth
                         label="Expected Output"
-                        value={testCase.output}
+                        value={testCase.expectedOutput}
                         onChange={(e) =>
-                          handleTestCaseChange(index, 'output', e.target.value)
+                          handleTestCaseChange(index, 'expectedOutput', e.target.value)
                         }
                         multiline
                         rows={2}

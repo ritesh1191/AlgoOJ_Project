@@ -33,12 +33,12 @@ exports.evaluateSubmission = async (req, res) => {
     for (const testCase of testCases) {
       try {
         const output = await runCode(code, language, testCase.input);
-        const passed = output.trim() === testCase.output.trim();
+        const passed = output.trim() === testCase.expectedOutput.trim();
         
         results.push({
           passed,
           input: testCase.input,
-          expectedOutput: testCase.output,
+          expectedOutput: testCase.expectedOutput,
           actualOutput: output,
           error: null,
           isHidden: testCase.isHidden
@@ -49,7 +49,7 @@ exports.evaluateSubmission = async (req, res) => {
         results.push({
           passed: false,
           input: testCase.input,
-          expectedOutput: testCase.output,
+          expectedOutput: testCase.expectedOutput,
           actualOutput: '',
           error: error.message,
           isHidden: testCase.isHidden

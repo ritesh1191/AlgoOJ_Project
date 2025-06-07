@@ -24,6 +24,16 @@ const submissionSchema = new mongoose.Schema({
     enum: ['Accepted', 'Wrong Answer', 'Runtime Error', 'Compilation Error'],
     required: true
   },
+  testCasesPassed: {
+    type: Number,
+    required: true,
+    default: 0
+  },
+  totalTestCases: {
+    type: Number,
+    required: true,
+    default: 0
+  },
   testResults: [{
     input: String,
     expectedOutput: String,

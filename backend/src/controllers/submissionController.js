@@ -16,16 +16,21 @@ exports.createSubmission = async (req, res) => {
       memoryUsed
     } = req.body;
 
+    // Validate required fields
+    if (!problemId || !code || !language || !status) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
     const submission = new Submission({
       user: req.user.id,
       problem: problemId,
       code,
       language,
       status,
-      testCasesPassed,
-      totalTestCases,
-      executionTime,
-      memoryUsed
+      testCasesPassed: testCasesPassed || 0,
+      totalTestCases: totalTestCases || 0,
+      executionTime: executionTime || 0,
+      memoryUsed: memoryUsed || 0
     });
 
     await submission.save();

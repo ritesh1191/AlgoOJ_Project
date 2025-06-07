@@ -68,6 +68,17 @@
     overflow-x: auto;
     font-size: 0.9rem;
     line-height: 1.5;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.custom-output {
+    flex: 1;
+    min-width: 0;
+    background-color: var(--background-primary, #ffffff);
+    border-radius: 4px;
+    padding: 1rem;
 }
 
 .button-container {

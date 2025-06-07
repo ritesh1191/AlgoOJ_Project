@@ -112,7 +112,7 @@ function ProblemDetail() {
     setIsRunning(true);
     try {
       const result = await runCode(code, language, customInput);
-      setCustomOutput(result.output);
+      setCustomOutput(result.output || '');  // Ensure output is not undefined
       toast.success('Code executed successfully!');
     } catch (error) {
       toast.error(error.message || 'Failed to run code');
@@ -372,7 +372,7 @@ function ProblemDetail() {
                     }
                   }}
                 >
-                  {testCase.output}
+                  {testCase.expectedOutput}
                 </Box>
               </CardContent>
             </Card>

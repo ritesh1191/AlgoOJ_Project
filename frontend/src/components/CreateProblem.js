@@ -29,7 +29,7 @@ const CreateProblem = () => {
     testCases: [
       {
         input: '',
-        output: '',
+        expectedOutput: '',
         explanation: '',
         isHidden: false,
       },
@@ -62,7 +62,7 @@ const CreateProblem = () => {
         ...formData.testCases,
         {
           input: '',
-          output: '',
+          expectedOutput: '',
           explanation: '',
           isHidden: false,
         },
@@ -183,9 +183,9 @@ const CreateProblem = () => {
                       fullWidth
                       required
                       label="Expected Output"
-                      value={testCase.output}
+                      value={testCase.expectedOutput}
                       onChange={(e) =>
-                        handleTestCaseChange(index, 'output', e.target.value)
+                        handleTestCaseChange(index, 'expectedOutput', e.target.value)
                       }
                       multiline
                       rows={3}
